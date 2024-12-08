@@ -14,6 +14,8 @@
 #include "command.h" // shutdown
 #include "sched.h" // sched_check_periodic
 #include "stepper.h" // stepper_event
+#include "board/gpio.h"
+#include "board/internal.h"
 
 static struct timer periodic_timer, sentinel_timer, deleted_timer;
 
@@ -336,6 +338,26 @@ sched_shutdown(uint_fast8_t reason)
     longjmp(shutdown_jmp, reason);
 }
 
+/****************************************************************
+ * Soft start
+ ****************************************************************/
+
+DECL_CONSTANT_STR("RESERVE_PINS_soft_start", "PC1,PB5");
+
+static void
+soft_start(void)
+{
+    struct gpio_adc power_good = gpio_adc_setup(GPIO('C', 1));
+    for (int i = 0; i < 1000; ++i) {
+        while (gpio_adc_sample(power_good)) {
+        }
+        if (gpio_adc_read(power_good) < 620) {
+            i = 0;
+        }
+    }
+
+    gpio_out_setup(GPIO('B', 5), 1);
+}
 
 /****************************************************************
  * Startup
@@ -347,6 +369,8 @@ sched_main(void)
 {
     extern void ctr_run_initfuncs(void);
     ctr_run_initfuncs();
+
+    soft_start();
 
     sendf("starting");
 
