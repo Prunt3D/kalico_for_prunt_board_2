@@ -13,6 +13,7 @@ MEMORY
 {
   rom (rx) : ORIGIN = CONFIG_FLASH_APPLICATION_ADDRESS , LENGTH = CONFIG_FLASH_SIZE
   ram (rwx) : ORIGIN = CONFIG_RAM_START , LENGTH = CONFIG_RAM_SIZE
+  ccm_persistent (rw) : ORIGIN = 0x10007E00, LENGTH = 512
 }
 
 SECTIONS
@@ -56,6 +57,15 @@ SECTIONS
         . = ALIGN(4);
         _bss_end = .;
     } > ram
+
+    .data_persistent (NOLOAD):
+    {
+        _data_persistent_start = .;
+        _kalico_boot_flag = .;
+        *(.data_persistent.kalico_boot_flag)
+        . = ALIGN(0x4);
+        _data_persistent_end = .;
+    } > ccm_persistent
 
     _stack_start = CONFIG_RAM_START + CONFIG_RAM_SIZE - CONFIG_STACK_SIZE ;
     .stack _stack_start (NOLOAD) :

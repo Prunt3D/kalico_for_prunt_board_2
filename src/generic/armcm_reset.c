@@ -41,10 +41,13 @@ try_request_canboot(void)
     canboot_reset(CANBOOT_REQUEST);
 }
 
+static volatile uint64_t kalico_persistent_boot_flag __attribute__((section(".data_persistent.kalico_boot_flag")));
+
 void
 command_reset(uint32_t *args)
 {
     canboot_reset(CANBOOT_BYPASS);
+    kalico_persistent_boot_flag = 0x0B1C93F0;
     NVIC_SystemReset();
 }
 DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
